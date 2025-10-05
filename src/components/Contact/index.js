@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { Title, Desc } from '../shared/StyledComponents';
 import { contact } from '../../data/constants';
-import { useRef } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import emailjs from '@emailjs/browser';
 
 const Container = styled.div`
@@ -63,7 +63,7 @@ const TextArea = styled.textarea`
     }
 `;
 
-const SubmitButton = styled.input`
+const SubmitButton = styled.button`
     padding: 10px;
     background: ${({ theme }) => theme.primary};
     color: ${({ theme }) => theme.text_primary};
@@ -71,18 +71,48 @@ const SubmitButton = styled.input`
     font-weight: 600;
     border-radius: 8px;
     border: 0px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 
     &:hover {
         cursor: pointer;
         background: ${({ theme }) => theme.primary + 99};
     }
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+        background: ${({ theme }) => theme.primary + 55};
+    }
+`;
+
+const ErrorText = styled.div`
+    color: #ff6b6b;
+    font-size: 14px;
 `;
 
 export const Contact = () => {
     const form = useRef();
 
+    const [userName, setUserName] = useState("");
+    const [userEmail, setUserEmail] = useState("");
+    const [message, setMessage] = useState("");
+    const [isSending, setIsSending] = useState(false);
+    const [touchedEmail, setTouchedEmail] = useState(false);
+
+    const isValidEmail = useMemo(() => {
+        const emailRegex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+        return emailRegex.test(userEmail.trim());
+    }, [userEmail]);
+
+    const allFilled = userName.trim() !== "" && userEmail.trim() !== "" && message.trim() !== "";
+    const formValid = allFilled && isValidEmail;
+
     function submitHandler(e) {
         e.preventDefault();
+        if (!formValid || isSending) return;
+        setIsSending(true);
         
         emailjs.sendForm(
             process.env.REACT_APP_EMAIL_SERVICE_ID,
@@ -91,10 +121,13 @@ export const Contact = () => {
             process.env.REACT_APP_EMAIL_PUBLIC_KEY)
         .then((result) => {
             form.current.reset();
+            setUserName("");
+            setUserEmail("");
+            setMessage("");
             console.log(result.text);
         }, (error) => {
             console.log(error.text);
-        });
+        }).finally(() => setIsSending(false));
     };
 
     return (
@@ -106,22 +139,47 @@ export const Contact = () => {
                 <TextInput type = 'text' key = {1}
                 placeholder = {contact?.input_placeholders[0]} 
                 required = {true}
-                name = 'user_name'/>
+                name = 'user_name'
+                value = {userName}
+                onChange = {(e) => setUserName(e.target.value)}/>
                 <TextInput type = 'email' key = {2}
                 placeholder = {contact?.input_placeholders[1]} 
                 required = {true}
-                name = 'user_email'/>
+                name = 'user_email'
+                value = {userEmail}
+                onChange = {(e) => setUserEmail(e.target.value)}
+                onBlur = {() => setTouchedEmail(true)}/>
+                {touchedEmail && userEmail.trim() !== "" && !isValidEmail && (
+                    <ErrorText>Oops! Enter valid email address</ErrorText>
+                )}
                 {
                     contact?.text_placeholders?.map((item, index) => (
                         <TextArea 
                         key = {index}
                         placeholder = {item} 
                         required = {true}
-                        name = 'message'/>
+                        name = 'message'
+                        value = {message}
+                        onChange = {(e) => setMessage(e.target.value)}/>
                     ))
                 }
-                <SubmitButton type = 'submit'
-                value = {contact?.button_content}/>
+                <SubmitButton type = 'submit' disabled = {!formValid || isSending}>
+                    {isSending ? (
+                        <>
+                            <span role="img" aria-label="sending">⏳</span>
+                            Sending...
+                        </>
+                    ) : !allFilled ? (
+                        <>Enter all details to send</>
+                    ) : !isValidEmail ? (
+                        <>Oops! Enter valid email address</>
+                    ) : (
+                        <>
+                            <span role="img" aria-label="send">✉️</span>
+                            {contact?.button_content}
+                        </>
+                    )}
+                </SubmitButton>
             </Wrapper>
         </Container>
     );
