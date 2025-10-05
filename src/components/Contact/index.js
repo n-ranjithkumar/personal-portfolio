@@ -169,9 +169,7 @@ export const Contact = () => {
                             <span role="img" aria-label="sending">⏳</span>
                             Sending...
                         </>
-                    ) : !allFilled ? (
-                        <>Enter all details to send</>
-                    ) : !isValidEmail ? (
+                    ) : !isValidEmail && allFilled ? (
                         <>Oops! Enter valid email address</>
                     ) : (
                         <>
