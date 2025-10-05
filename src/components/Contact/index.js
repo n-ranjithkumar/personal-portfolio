@@ -143,15 +143,13 @@ export const Contact = () => {
                 value = {userName}
                 onChange = {(e) => setUserName(e.target.value)}/>
                 <TextInput type = 'email' key = {2}
-                placeholder = {contact?.input_placeholders[1]} 
+                placeholder = "Email" 
                 required = {true}
                 name = 'user_email'
                 value = {userEmail}
                 onChange = {(e) => setUserEmail(e.target.value)}
                 onBlur = {() => setTouchedEmail(true)}/>
-                {touchedEmail && userEmail.trim() !== "" && !isValidEmail && (
-                    <ErrorText>Oops! Enter valid email address</ErrorText>
-                )}
+                {/* Inline error removed per request */}
                 {
                     contact?.text_placeholders?.map((item, index) => (
                         <TextArea 
@@ -169,8 +167,6 @@ export const Contact = () => {
                             <span role="img" aria-label="sending">⏳</span>
                             Sending...
                         </>
-                    ) : !isValidEmail && allFilled ? (
-                        <>Oops! Enter valid email address</>
                     ) : (
                         <>
                             <span role="img" aria-label="send">✉️</span>
